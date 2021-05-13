@@ -1,5 +1,5 @@
 # kube-dbaas
-Experimental project to provide a tsuru service that maintains database operators
+Experimental (Hackday) project to provide a tsuru service that maintains database operators
 
 
 # inspiration
