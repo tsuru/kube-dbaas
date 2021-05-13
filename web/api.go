@@ -20,11 +20,6 @@ import (
 var metricsMiddleware = echoPrometheus.MetricsMiddleware()
 
 type api struct {
-	// Address is the network address where the web server will listen on.
-	// Defaults to `:9999`.
-	Address    string
-	TLSAddress string
-
 	// ShutdownTimeout defines the max duration used to wait the web server
 	// gracefully shutting down. Defaults to `30 * time.Second`.
 	ShutdownTimeout time.Duration
@@ -40,8 +35,6 @@ type API interface {
 
 func New() (API, error) {
 	return &api{
-		Address:         `:9999`,
-		TLSAddress:      `:9993`,
 		ShutdownTimeout: 30 * time.Second,
 		e:               newEcho(),
 		shutdown:        make(chan struct{}),
@@ -60,7 +53,11 @@ func (a *api) handleSignals() {
 }
 
 func (a *api) startServer() error {
-	return a.e.StartH2CServer(a.Address, &http2.Server{})
+	portStr := os.Getenv("PORT")
+	if portStr == "" {
+		portStr = "8888"
+	}
+	return a.e.StartH2CServer(":"+portStr, &http2.Server{})
 }
 
 func (a *api) Start() error {
