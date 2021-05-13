@@ -102,6 +102,9 @@ func newEcho() *echo.Echo {
 	e.GET("/metrics", echo.WrapHandler(promhttp.Handler()))
 	e.GET("/healthcheck", healthcheck)
 
+	group := e.Group("/resources")
+	group.GET("/plans", servicePlans)
+
 	/*
 		    group.GET("/plans", servicePlans)
 			group.POST("", serviceCreate)
