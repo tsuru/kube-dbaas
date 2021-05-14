@@ -7,7 +7,11 @@ import (
 	"github.com/google/gops/agent"
 	"github.com/tsuru/kube-dbaas/web"
 
-	extensionsruntime "github.com/tsuru/rpaas-operator/pkg/runtime"
+	mongov1 "github.com/mongodb/mongodb-kubernetes-operator/api/v1"
+
+	corev1 "k8s.io/api/core/v1"
+	"k8s.io/apimachinery/pkg/runtime"
+	utilruntime "k8s.io/apimachinery/pkg/util/runtime"
 	ctrl "sigs.k8s.io/controller-runtime"
 )
 
@@ -16,9 +20,13 @@ func main() {
 		log.Fatalf("could not initialize gops agent: %v", err)
 	}
 
+	scheme := runtime.NewScheme()
+	utilruntime.Must(corev1.AddToScheme(scheme))
+	utilruntime.Must(mongov1.AddToScheme(scheme))
+
 	syncPeriod := time.Minute
 	mgr, err := ctrl.NewManager(ctrl.GetConfigOrDie(), ctrl.Options{
-		Scheme:             extensionsruntime.NewScheme(),
+		Scheme:             scheme,
 		MetricsBindAddress: ":8080",
 		Port:               9443,
 		SyncPeriod:         &syncPeriod,
