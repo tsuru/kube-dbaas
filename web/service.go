@@ -45,6 +45,33 @@ func (a *api) serviceCreate(c echo.Context) error {
 	return c.NoContent(http.StatusCreated)
 }
 
+func (a *api) serviceBindApp(c echo.Context) error {
+	ctx := c.Request().Context()
+	instance := c.Param("instance")
+	if c.Request().ContentLength == 0 {
+		return echo.NewHTTPError(http.StatusBadRequest, "Request body can't be empty")
+	}
+
+	var args types.BindAppArgs
+	if err := c.Bind(&args); err != nil {
+		return err
+	}
+
+	// TODO: we need to provision networkpolicies
+	// TODO: discover engine by service name
+	e, err := NewEngineFromPlan(a.Client, "")
+	if err != nil {
+		return err
+	}
+
+	envVars, err := e.AppEnvVars(ctx, instance)
+	if err != nil {
+		return err
+	}
+
+	return c.JSON(http.StatusCreated, envVars)
+}
+
 func decodeFormParameters(r *http.Request) map[string]interface{} {
 	if r == nil {
 		return nil

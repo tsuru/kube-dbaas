@@ -2,6 +2,7 @@ package mongo
 
 import (
 	"context"
+	"net/url"
 
 	mongov1 "github.com/mongodb/mongodb-kubernetes-operator/api/v1"
 	corev1 "k8s.io/api/core/v1"
@@ -84,4 +85,33 @@ func (e *Engine) DeleteInstance() {
 
 func (e *Engine) Status() {
 
+}
+
+func (e *Engine) AppEnvVars(ctx context.Context, instanceName string) (map[string]string, error) {
+	instance := &mongov1.MongoDBCommunity{}
+
+	err := e.cli.Get(ctx, client.ObjectKey{
+		Namespace: "kube-dbaas",
+		Name:      instanceName,
+	}, instance)
+
+	if err != nil {
+		return nil, err
+	}
+
+	u, err := url.Parse(instance.Status.MongoURI)
+
+	if err != nil {
+		return nil, err
+	}
+
+	u.User = url.UserPassword("tsuru", "admin")
+
+	return map[string]string{
+		"DBAAS_MONGODB_HOSTS":    u.Host,
+		"DBAAS_MONGODB_PASSWORD": "admin",
+		"DBAAS_MONGODB_ENDPOINT": u.String(),
+		"DBAAS_MONGODB_USER":     "tsuru",
+		"DBAAS_MONGODB_PORT":     "27017",
+	}, nil
 }
