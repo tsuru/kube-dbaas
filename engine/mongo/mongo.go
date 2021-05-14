@@ -83,8 +83,19 @@ func (e *Engine) DeleteInstance() {
 
 }
 
-func (e *Engine) Status() {
+func (e *Engine) Status(ctx context.Context, instanceName string) (address string, ready bool, err error) {
+	instance := &mongov1.MongoDBCommunity{}
 
+	err = e.cli.Get(ctx, client.ObjectKey{
+		Namespace: "kube-dbaas",
+		Name:      instanceName,
+	}, instance)
+
+	if err != nil {
+		return "", false, err
+	}
+
+	return instance.Status.MongoURI, instance.Status.Phase == mongov1.Running, nil
 }
 
 func (e *Engine) AppEnvVars(ctx context.Context, instanceName string) (map[string]string, error) {

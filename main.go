@@ -1,6 +1,7 @@
 package main
 
 import (
+	"context"
 	"log"
 	"time"
 
@@ -32,8 +33,15 @@ func main() {
 		SyncPeriod:         &syncPeriod,
 	})
 	if err != nil {
-		log.Fatalf("unable to start manager: %v", err)
+		log.Fatalf("unable to create manager: %v", err)
 	}
+
+	go func() {
+		err = mgr.Start(context.Background())
+		if err != nil {
+			log.Fatalf("unable to start manager: %v", err)
+		}
+	}()
 
 	api, err := web.New(mgr.GetClient())
 	if err != nil {

@@ -6,6 +6,7 @@ import (
 	"io/ioutil"
 	"log"
 	"net/http"
+	"strconv"
 
 	"github.com/ajg/form"
 	echo "github.com/labstack/echo/v4"
@@ -70,6 +71,66 @@ func (a *api) serviceBindApp(c echo.Context) error {
 	}
 
 	return c.JSON(http.StatusCreated, envVars)
+}
+
+func serviceBindUnit(c echo.Context) error {
+	return c.NoContent(http.StatusCreated)
+}
+
+func serviceUnbindUnit(c echo.Context) error {
+	return c.NoContent(http.StatusOK)
+}
+
+func serviceUnbindApp(c echo.Context) error {
+	return c.NoContent(http.StatusNoContent)
+}
+
+func (a *api) serviceStatus(c echo.Context) error {
+	ctx := c.Request().Context()
+	instance := c.Param("instance")
+
+	// TODO: discover engine by service name
+	e, err := NewEngineFromPlan(a.Client, "")
+	if err != nil {
+		return err
+	}
+
+	_, ready, err := e.Status(ctx, instance)
+
+	if err != nil {
+		return err
+	}
+
+	if !ready {
+		return c.NoContent(http.StatusAccepted)
+	}
+
+	return c.NoContent(http.StatusNoContent)
+}
+
+func (a *api) serviceInfo(c echo.Context) error {
+	ctx := c.Request().Context()
+	instance := c.Param("instance")
+
+	// TODO: discover engine by service name
+	e, err := NewEngineFromPlan(a.Client, "")
+	if err != nil {
+		return err
+	}
+
+	address, ready, err := e.Status(ctx, instance)
+
+	ret := []map[string]string{
+		{
+			"label": "Address",
+			"value": address,
+		},
+		{
+			"label": "Ready",
+			"value": strconv.FormatBool(ready),
+		},
+	}
+	return c.JSON(http.StatusOK, ret)
 }
 
 func decodeFormParameters(r *http.Request) map[string]interface{} {

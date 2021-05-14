@@ -107,23 +107,27 @@ func (a *api) newEcho() *echo.Echo {
 	group := e.Group("/resources")
 	group.GET("/plans", servicePlans)
 	group.POST("", a.serviceCreate)
-	group.POST("/:instance/bind-app", a.serviceBindApp)
 
+	group.POST("/:instance/bind-app", a.serviceBindApp)
+	group.DELETE("/:instance/bind-app", serviceUnbindApp)
+
+	group.GET("/:instance/status", a.serviceStatus)
+	group.GET("/:instance", a.serviceInfo)
+
+	group.POST("/:instance/bind", serviceBindUnit)
+	group.DELETE("/:instance/bind", serviceUnbindUnit)
 	/*
 
 		group.GET("/:instance/plans", servicePlans)
-		group.GET("/:instance", serviceInfo)
 		group.PUT("/:instance", serviceUpdate)
-		group.GET("/:instance/status", serviceStatus)
+
 		group.DELETE("/:instance", serviceDelete)
 		group.GET("/:instance/autoscale", getAutoscale)
 		group.POST("/:instance/autoscale", createAutoscale)
 		group.PATCH("/:instance/autoscale", updateAutoscale)
 		group.DELETE("/:instance/autoscale", removeAutoscale)
 
-		group.DELETE("/:instance/bind-app", serviceUnbindApp)
-		group.POST("/:instance/bind", serviceBindUnit)
-		group.DELETE("/:instance/bind", serviceUnbindUnit)
+
 		group.GET("/:instance/info", instanceInfo)
 	*/
 
