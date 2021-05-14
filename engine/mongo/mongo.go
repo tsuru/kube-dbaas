@@ -5,8 +5,11 @@ import (
 	"net/url"
 
 	mongov1 "github.com/mongodb/mongodb-kubernetes-operator/api/v1"
+	appsv1 "k8s.io/api/apps/v1"
 	corev1 "k8s.io/api/core/v1"
+	"k8s.io/apimachinery/pkg/api/resource"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+
 	"sigs.k8s.io/controller-runtime/pkg/client"
 
 	"github.com/tsuru/kube-dbaas/engine"
@@ -67,8 +70,48 @@ func (e *Engine) CreateInstance(ctx context.Context, create *types.CreateArgs) e
 					Roles: []mongov1.Role{
 						{Name: "clusterAdmin", DB: "admin"},
 						{Name: "userAdminAnyDatabase", DB: "admin"},
+						{Name: "readWrite", DB: create.Name},
 					},
 					ScramCredentialsSecretName: "my-scram",
+				},
+			},
+			StatefulSetConfiguration: mongov1.StatefulSetConfiguration{
+				SpecWrapper: mongov1.StatefulSetSpecWrapper{
+					Spec: appsv1.StatefulSetSpec{
+						Template: corev1.PodTemplateSpec{
+							Spec: corev1.PodSpec{
+								Containers: []corev1.Container{
+									{
+										Name: "mongod",
+										Resources: corev1.ResourceRequirements{
+											Limits: corev1.ResourceList{
+												"cpu":    resource.MustParse("100m"),
+												"memory": resource.MustParse("256Mi"),
+											},
+											Requests: corev1.ResourceList{
+												"cpu":    resource.MustParse("100m"),
+												"memory": resource.MustParse("256Mi"),
+											},
+										},
+									},
+
+									{
+										Name: "mongodb-agent",
+										Resources: corev1.ResourceRequirements{
+											Limits: corev1.ResourceList{
+												"cpu":    resource.MustParse("50m"),
+												"memory": resource.MustParse("128Mi"),
+											},
+											Requests: corev1.ResourceList{
+												"cpu":    resource.MustParse("50m"),
+												"memory": resource.MustParse("128Mi"),
+											},
+										},
+									},
+								},
+							},
+						},
+					},
 				},
 			},
 		},
@@ -117,6 +160,7 @@ func (e *Engine) AppEnvVars(ctx context.Context, instanceName string) (map[strin
 	}
 
 	u.User = url.UserPassword("tsuru", "admin")
+	u.Path = "/" + instanceName
 
 	return map[string]string{
 		"DBAAS_MONGODB_HOSTS":    u.Host,
